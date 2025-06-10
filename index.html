@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Ball Sort Puzzle - Premium Touch Experience</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    <style>
+        * {
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        body {
+            overscroll-behavior: none;
+            touch-action: manipulation;
+        }
+
+        .tube {
+            width: 70px;
+            height: 280px;
+            border: 5px solid #374151;
+            border-radius: 0 0 20px 20px;
+            border-top: none;
+            background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+            position: relative;
+            display: flex;
+            flex-direction: column-reverse;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 8px;
+            margin: 0 8px;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+            transition: all 0.2s ease;
+            cursor: pointer;
+            touch-action: manipulation;
+            min-height: 280px;
+        }
+
+        .tube:active {
+            transform: scale(0.98);
+        }
+
+        .tube.highlight {
+            border-color: #10b981;
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.6);
+            transform: translateY(-3px);
+        }
+
+        .tube.selected-destination {
+            border-color: #f59e0b;
+            box-shadow: 0 0 25px rgba(245, 158, 11, 0.8);
+            animation: destinationPulse 0.8s infinite;
+            transform: translateY(-3px);
+        }
+
+        @keyframes destinationPulse {
+            0%, 100% { 
+                transform: translateY(-3px) scale(1);
+                box-shadow: 0 0 25px rgba(245, 158, 11, 0.8);
+            }
+            50% { 
+                transform: translateY(-3px) scale(1.03);
+                box-shadow: 0 0 35px rgba(245, 158, 11, 1);
+            }
+        }
+
+        .ball {
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            margin: 3px 0;
+            cursor: pointer;
+            position: relative;
+            box-shadow: inset -6px -6px 12px rgba(0, 0, 0, 0.25), 
+                        inset 6px 6px 12px rgba(255, 255, 255, 0.6),
+                        0 4px 8px rgba(0, 0, 0, 0.15);
+            transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 10;
+            touch-action: manipulation;
+        }
+
+        .ball:active {
+            transform: scale(0.95);
+        }
+
+        .ball.selected {
+            transform: scale(1.25);
+            z-index: 30;
+            box-shadow: 0 0 30px rgba(255, 255, 255, 1), 
+                        0 12px 24px rgba(0, 0, 0, 0.4);
+            animation: selectedBallPulse 0.6s infinite;
+        }
+
+        @keyframes selectedBallPulse {
+            0%, 100% { 
+                box-shadow: 0 0 30px rgba(255, 255, 255, 1), 0 12px 24px rgba(0, 0, 0, 0.4);
+                transform: scale(1.25);
+            }
+            50% { 
+                box-shadow: 0 0 40px rgba(255, 255, 255, 1.2), 0 12px 24px rgba(0, 0, 0, 0.4);
+                transform: scale(1.3);
+            }
+        }
+
+        .ball.moveable {
+            animation: moveablePulse 2s infinite;
+        }
+
+        @keyframes moveablePulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.08); }
+        }
+
+        .ball.bounce-in {
+            animation: bounceIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        @keyframes bounceIn {
+            0% { transform: scale(0) translateY(-100px); opacity: 0; }
+            50% { transform: scale(1.2) translateY(-20px); opacity: 0.8; }
+            100% { transform: scale(1) translateY(0); opacity: 1; }
+        }
+
+        .color-red { background: linear-gradient(135deg, #ef4444 0%, #dc2626 50%, #b91c1c 100%); }
+        .color-blue { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 50%, #1d4ed8 100%); }
+        .color-green { background: linear-gradient(135deg, #10b981 0%, #059669 50%, #047857 100%); }
+        .color-yellow { background: linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #b45309 100%); }
+        .color-purple { background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 50%, #6d28d9 100%); }
+        .color-pink { background: linear-gradient(135deg, #ec4899 0%, #db2777 50%, #be185d 100%); }
+        .color-orange { background: linear-gradient(135deg, #f97316 0%, #ea580c 50%, #c2410c 100%); }
+        .color-cyan { background: linear-gradient(135deg, #06b6d4 0%, #0891b2 50%, #0e7490 100%); }
+
+        .game-container {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #8360c3 100%);
+            min-height: 100vh;
+            min-height: 100dvh;
+        }
+
+        .level-complete {
+            animation: celebrateWin 1.2s ease-in-out;
+        }
+
+        @keyframes celebrateWin {
+            0%, 100% { transform: scale(1); }
+            25% { transform: scale(1.05) rotate(2deg); }
+            75% { transform: scale(1.05) rotate(-2deg); }
+        }
+
+        .hint-highlight {
+            animation: hintGlow 1.2s ease-in-out 3;
+        }
+
+        @keyframes hintGlow {
+            0%, 100% { 
+                box-shadow: 0 0 10px rgba(255, 255, 0, 0.6);
+                border-color: #f59e0b;
+            }
+            50% { 
+                box-shadow: 0 0 30px rgba(255, 255, 0, 1);
+                border-color: #fbbf24;
+            }
+        }
+
+        .instruction-text {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(15px);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+            text-align: center;
+            color: white;
+            font-weight: 600;
+            font-size: 1.1rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .control-button {
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: all 0.2s ease;
+            touch-action: manipulation;
+            min-height: 48px;
+            min-width: 100px;
+        }
+
+        .control-button:active {
+            transform: scale(0.95);
+        }
+
+        .feedback-success {
+            background: rgba(16, 185, 129, 0.9);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            animation: slideInUp 0.3s ease;
+        }
+
+        .feedback-error {
+            background: rgba(239, 68, 68, 0.9);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            animation: shake 0.5s ease;
+        }
+
+        @keyframes slideInUp {
+            0% { transform: translateY(20px); opacity: 0; }
+            100% { transform: translateY(0); opacity: 1; }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        .success-particle {
+            position: fixed;
+            width: 8px;
+            height: 8px;
+            background: #10b981;
+            border-radius: 50%;
+            pointer-events: none;
+            animation: particleFloat 2s ease-out forwards;
+        }
+
+        @keyframes particleFloat {
+            0% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-100px) scale(0);
+            }
+        }
+
+        /* Mobile Optimizations */
+        @media (max-width: 768px) {
+            .tube {
+                width: 60px;
+                height: 240px;
+                margin: 0 6px;
+                padding: 6px;
+            }
+            
+            .ball {
+                width: 44px;
+                height: 44px;
+                margin: 2px 0;
+            }
+
+            .control-button {
+                padding: 14px 18px;
+                font-size: 0.95rem;
+                min-height: 52px;
+            }
+
+            .instruction-text {
+                font-size: 1rem;
+                padding: 14px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .tube {
+                width: 52px;
+                height: 208px;
+                margin: 0 4px;
+                padding: 4px;
+            }
+            
+            .ball {
+                width: 38px;
+                height: 38px;
+                margin: 1px 0;
+            }
+
+            .control-button {
+                padding: 16px 16px;
+                font-size: 0.9rem;
+                min-height: 56px;
+            }
+        }
+
+        /* Landscape mode adjustments */
+        @media (max-height: 600px) and (orientation: landscape) {
+            .tube {
+                height: 160px;
+            }
+            
+            .ball {
+                width: 32px;
+                height: 32px;
+            }
+        }
+
+        /* High DPI displays */
+        @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+            .ball {
+                box-shadow: inset -3px -3px 6px rgba(0, 0, 0, 0.25), 
+                            inset 3px 3px 6px rgba(255, 255, 255, 0.6),
+                            0 2px 4px rgba(0, 0, 0, 0.15);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <!-- Header -->
+        <div class="bg-white bg-opacity-20 backdrop-blur-md p-4 shadow-lg sticky top-0 z-40">
+            <div class="max-w-6xl mx-auto flex flex-wrap justify-between items-center">
+                <h1 class="text-2xl md:text-3xl font-bold text-white flex items-center">
+                    <i class="fas fa-circle text-red-400 mr-2"></i>
+                    Ball Sort Puzzle
+                </h1>
+                <div class="flex flex-wrap items-center space-x-4 mt-2 md:mt-0 text-sm md:text-base">
+                    <div class="text-white font-semibold">
+                        <i class="fas fa-layer-group mr-1"></i>
+                        Level: <span id="currentLevel" class="font-bold">1</span>
+                    </div>
+                    <div class="text-white font-semibold">
+                        <i class="fas fa-clock mr-1"></i>
+                        <span id="timer" class="font-bold">00:00</span>
+                    </div>
+                    <div class="text-white font-semibold">
+                        <i class="fas fa-star mr-1"></i>
+                        <span id="score" class="font-bold">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Game Controls -->
+        <div class="max-w-6xl mx-auto p-4">
+            <div class="bg-white bg-opacity-20 backdrop-blur-md rounded-lg p-4 mb-4">
+                <div class="flex flex-wrap justify-center gap-3">
+                    <button id="hintBtn" class="control-button bg-yellow-500 hover:bg-yellow-600 active:bg-yellow-700 text-white transition-colors">
+                        <i class="fas fa-lightbulb mr-2"></i>
+                        Hint
+                    </button>
+                    <button id="resetBtn" class="control-button bg-red-500 hover:bg-red-600 active:bg-red-700 text-white transition-colors">
+                        <i class="fas fa-redo mr-2"></i>
+                        Reset
+                    </button>
+                    <button id="nextLevelBtn" class="control-button bg-green-500 hover:bg-green-600 active:bg-green-700 text-white transition-colors hidden">
+                        <i class="fas fa-arrow-right mr-2"></i>
+                        Next Level
+                    </button>
+                </div>
+            </div>
+
+            <!-- Instructions -->
+            <div id="instructionText" class="instruction-text">
+                <i class="fas fa-hand-pointer mr-2"></i>
+                Tap a ball to select it, then tap a tube to move it there
+            </div>
+
+            <!-- Game Board -->
+            <div class="bg-white bg-opacity-20 backdrop-blur-md rounded-lg p-6">
+                <div id="gameBoard" class="flex flex-wrap justify-center items-end min-h-64">
+                    <!-- Tubes will be generated here -->
+                </div>
+            </div>
+
+            <!-- Game Status -->
+            <div id="gameStatus" class="text-center mt-4 text-lg font-semibold hidden">
+                <!-- Status messages will appear here -->
+            </div>
+        </div>
+
+        <!-- Instructions Modal -->
+        <div id="instructionsModal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
+            <div class="bg-white rounded-xl p-6 max-w-md mx-4 shadow-2xl">
+                <h2 class="text-2xl font-bold mb-4 text-center text-gray-800">🎯 How to Play</h2>
+                <ul class="space-y-3 mb-6 text-gray-700">
+                    <li class="flex items-center"><i class="fas fa-circle text-blue-500 mr-3 text-sm"></i><span class="text-sm">Sort all balls by color into separate tubes</span></li>
+                    <li class="flex items-center"><i class="fas fa-circle text-green-500 mr-3 text-sm"></i><span class="text-sm">Tap a ball to select it (it will glow)</span></li>
+                    <li class="flex items-center"><i class="fas fa-circle text-yellow-500 mr-3 text-sm"></i><span class="text-sm">Tap a destination tube to move the ball</span></li>
+                    <li class="flex items-center"><i class="fas fa-circle text-purple-500 mr-3 text-sm"></i><span class="text-sm">Only the top ball in each tube can be moved</span></li>
+                    <li class="flex items-center"><i class="fas fa-circle text-pink-500 mr-3 text-sm"></i><span class="text-sm">Each tube holds a maximum of 4 balls</span></li>
+                    <li class="flex items-center"><i class="fas fa-circle text-orange-500 mr-3 text-sm"></i><span class="text-sm">Use hints when you get stuck</span></li>
+                </ul>
+                <button id="startGameBtn" class="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white py-3 rounded-lg font-semibold text-lg transition-all">
+                    🚀 Start Playing!
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class BallSortGame {
+            constructor() {
+                this.level = 1;
+                this.score = 0;
+                this.timer = 0;
+                this.timerInterval = null;
+                this.tubes = [];
+                this.maxBallsPerTube = 4;
+                this.selectedBall = null;
+                this.selectedTube = null;
+                this.colors = ['red', 'blue', 'green', 'yellow', 'purple', 'pink', 'orange', 'cyan'];
+                this.gameStarted = false;
+                this.moveCount = 0;
+                
+                this.init();
+            }
+
+            init() {
+                this.setupEventListeners();
+                this.showInstructions();
+                this.preventZoom();
+            }
+
+            preventZoom() {
+                // Prevent zoom on double tap
+                let lastTouchEnd = 0;
+                document.addEventListener('touchend', (event) => {
+                    const now = Date.now();
+                    if (now - lastTouchEnd <= 300) {
+                        event.preventDefault();
+                    }
+                    lastTouchEnd = now;
+                }, false);
+
+                // Prevent pinch zoom
+                document.addEventListener('gesturestart', (e) => e.preventDefault());
+                document.addEventListener('gesturechange', (e) => e.preventDefault());
+                document.addEventListener('gestureend', (e) => e.preventDefault());
+            }
+
+            setupEventListeners() {
+                document.getElementById('startGameBtn').addEventListener('click', () => {
+                    this.hideInstructions();
+                    this.startGame();
+                });
+
+                document.getElementById('hintBtn').addEventListener('click', () => this.showHint());
+                document.getElementById('resetBtn').addEventListener('click', () => this.resetLevel());
+                document.getElementById('nextLevelBtn').addEventListener('click', () => this.nextLevel());
+
+                // Add touch event listeners for better mobile experience
+                document.addEventListener('touchstart', (e) => {
+                    // Prevent default only for game elements
+                    if (e.target.classList.contains('ball') || e.target.classList.contains('tube')) {
+                        e.preventDefault();
+                    }
+                }, { passive: false });
+            }
+
+            triggerHapticFeedback(type = 'light') {
+                if ('vibrate' in navigator) {
+                    switch(type) {
+                        case 'light':
+                            navigator.vibrate(10);
+                            break;
+                        case 'medium':
+                            navigator.vibrate(25);
+                            break;
+                        case 'heavy':
+                            navigator.vibrate(50);
+                            break;
+                        case 'success':
+                            navigator.vibrate([50, 30, 100]);
+                            break;
+                        case 'error':
+                            navigator.vibrate([100, 50, 100]);
+                            break;
+                    }
+                }
+            }
+
+            createSuccessParticles(x, y) {
+                for (let i = 0; i < 8; i++) {
+                    const particle = document.createElement('div');
+                    particle.className = 'success-particle';
+                    particle.style.left = x + (Math.random() - 0.5) * 40 + 'px';
+                    particle.style.top = y + (Math.random() - 0.5) * 40 + 'px';
+                    particle.style.background = this.colors[Math.floor(Math.random() * this.colors.length)];
+                    document.body.appendChild(particle);
+                    
+                    setTimeout(() => {
+                        if (particle.parentNode) {
+                            particle.parentNode.removeChild(particle);
+                        }
+                    }, 2000);
+                }
+            }
+
+            showInstructions() {
+                document.getElementById('instructionsModal').classList.remove('hidden');
+            }
+
+            hideInstructions() {
+                document.getElementById('instructionsModal').classList.add('hidden');
+            }
+
+            startGame() {
+                this.gameStarted = true;
+                this.generateLevel();
+                this.startTimer();
+            }
+
+            generateLevel() {
+                const numColors = Math.min(2 + Math.floor(this.level / 2), 6);
+                const numTubes = numColors + 2;
+                
+                this.tubes = Array(numTubes).fill().map(() => []);
+                
+                const balls = [];
+                for (let i = 0; i < numColors; i++) {
+                    for (let j = 0; j < this.maxBallsPerTube; j++) {
+                        balls.push(this.colors[i]);
+                    }
+                }
+
+                // Advanced shuffle algorithm
+                for (let i = balls.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [balls[i], balls[j]] = [balls[j], balls[i]];
+                }
+
+                let ballIndex = 0;
+                for (let i = 0; i < numTubes - 2; i++) {
+                    for (let j = 0; j < this.maxBallsPerTube; j++) {
+                        if (ballIndex < balls.length) {
+                            this.tubes[i].push(balls[ballIndex++]);
+                        }
+                    }
+                }
+
+                this.renderGame();
+                this.updateUI();
+                this.moveCount = 0;
+            }
+
+            renderGame() {
+                const gameBoard = document.getElementById('gameBoard');
+                gameBoard.innerHTML = '';
+
+                this.tubes.forEach((tube, tubeIndex) => {
+                    const tubeElement = document.createElement('div');
+                    tubeElement.className = 'tube';
+                    tubeElement.dataset.tubeIndex = tubeIndex;
+
+                    // Enhanced touch events
+                    tubeElement.addEventListener('touchstart', (e) => {
+                        e.preventDefault();
+                        this.triggerHapticFeedback('light');
+                    });
+
+                    tubeElement.addEventListener('touchend', (e) => {
+                        e.preventDefault();
+                        if (e.target === tubeElement || !e.target.classList.contains('ball')) {
+                            this.onTubeClick(tubeIndex);
+                        }
+                    });
+
+                    tubeElement.addEventListener('click', (e) => {
+                        if (e.target === tubeElement || !e.target.classList.contains('ball')) {
+                            this.onTubeClick(tubeIndex);
+                        }
+                    });
+
+                    tube.forEach((color, ballIndex) => {
+                        const ball = document.createElement('div');
+                        ball.className = `ball color-${color}`;
+                        ball.dataset.color = color;
+                        ball.dataset.tubeIndex = tubeIndex;
+                        ball.dataset.ballIndex = ballIndex;
+                        
+                        if (ballIndex === tube.length - 1) {
+                            ball.classList.add('moveable');
+                            
+                            ball.addEventListener('touchstart', (e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                this.triggerHapticFeedback('medium');
+                            });
+
+                            ball.addEventListener('touchend', (e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                this.onBallClick(tubeIndex, ballIndex);
+                            });
+                            
+                            ball.addEventListener('click', (e) => {
+                                e.stopPropagation();
+                                this.onBallClick(tubeIndex, ballIndex);
+                            });
+                        }
+                        
+                        // Add entrance animation
+                        setTimeout(() => {
+                            ball.classList.add('bounce-in');
+                        }, ballIndex * 50);
+                        
+                        tubeElement.appendChild(ball);
+                    });
+
+                    gameBoard.appendChild(tubeElement);
+                });
+            }
+
+            onBallClick(tubeIndex, ballIndex) {
+                const tube = this.tubes[tubeIndex];
+                
+                if (ballIndex !== tube.length - 1) {
+                    return;
+                }
+
+                if (this.selectedTube === tubeIndex) {
+                    this.clearSelection();
+                    this.updateInstructionText("Tap a ball to select it, then tap a tube to move it there");
+                    this.triggerHapticFeedback('light');
+                    return;
+                }
+
+                this.clearSelection();
+                this.selectedTube = tubeIndex;
+                this.updateVisualSelection();
+                this.updateInstructionText("Great! Now tap a destination tube to move the selected ball");
+                this.triggerHapticFeedback('medium');
+            }
+
+            onTubeClick(tubeIndex) {
+                if (this.selectedTube === null) {
+                    this.updateInstructionText("First tap a ball to select it");
+                    this.triggerHapticFeedback('light');
+                    return;
+                }
+
+                if (this.selectedTube === tubeIndex) {
+                    this.clearSelection();
+                    this.updateInstructionText("Tap a ball to select it, then tap a tube to move it there");
+                    this.triggerHapticFeedback('light');
+                    return;
+                }
+
+                if (this.canMoveBall(this.selectedTube, tubeIndex)) {
+                    const rect = document.querySelector(`[data-tube-index="${tubeIndex}"]`).getBoundingClientRect();
+                    this.createSuccessParticles(rect.left + rect.width/2, rect.top + rect.height/2);
+                    
+                    this.moveBall(this.selectedTube, tubeIndex);
+                    this.showFeedback('Perfect move! 🎯', 'success');
+                    this.clearSelection();
+                    this.updateInstructionText("Excellent! Keep sorting the balls by color");
+                    this.triggerHapticFeedback('success');
+                } else {
+                    this.showFeedback('Oops! Try a different tube 🤔', 'error');
+                    this.triggerHapticFeedback('error');
+                }
+            }
+
+            updateVisualSelection() {
+                document.querySelectorAll('.ball').forEach(ball => {
+                    ball.classList.remove('selected');
+                });
+                document.querySelectorAll('.tube').forEach(tube => {
+                    tube.classList.remove('selected-destination');
+                });
+
+                if (this.selectedTube !== null) {
+                    const selectedTube = document.querySelector(`[data-tube-index="${this.selectedTube}"]`);
+                    const selectedBall = selectedTube?.querySelector('.ball:last-child');
+                    if (selectedBall) {
+                        selectedBall.classList.add('selected');
+                    }
+
+                    this.tubes.forEach((_, tubeIndex) => {
+                        if (tubeIndex !== this.selectedTube && this.canMoveBall(this.selectedTube, tubeIndex)) {
+                            const tube = document.querySelector(`[data-tube-index="${tubeIndex}"]`);
+                            if (tube) {
+                                tube.classList.add('selected-destination');
+                            }
+                        }
+                    });
+                }
+            }
+
+            clearSelection() {
+                this.selectedTube = null;
+                this.selectedBall = null;
+                
+                document.querySelectorAll('.ball').forEach(ball => {
+                    ball.classList.remove('selected');
+                });
+                document.querySelectorAll('.tube').forEach(tube => {
+                    tube.classList.remove('selected-destination');
+                });
+            }
+
+            updateInstructionText(text) {
+                const instructionElement = document.getElementById('instructionText');
+                instructionElement.innerHTML = `<i class="fas fa-hand-pointer mr-2"></i>${text}`;
+            }
+
+            canMoveBall(fromTube, toTube) {
+                if (fromTube === toTube) return false;
+                if (this.tubes[fromTube].length === 0) return false;
+                if (this.tubes[toTube].length >= this.maxBallsPerTube) return false;
+                
+                const movingBall = this.tubes[fromTube][this.tubes[fromTube].length - 1];
+                
+                if (this.tubes[toTube].length === 0) return true;
+                
+                const topBall = this.tubes[toTube][this.tubes[toTube].length - 1];
+                return movingBall === topBall;
+            }
+
+            moveBall(fromTube, toTube) {
+                const ball = this.tubes[fromTube].pop();
+                this.tubes[toTube].push(ball);
+                this.score += 10 + (this.level * 5);
+                this.moveCount++;
+                this.renderGame();
+                this.updateUI();
+                this.checkWinCondition();
+            }
+
+            showFeedback(message, type) {
+                const status = document.getElementById('gameStatus');
+                status.textContent = message;
+                status.className = `text-center mt-4 text-lg font-semibold ${type === 'success' ? 'feedback-success' : 'feedback-error'}`;
+                status.classList.remove('hidden');
+                
+                setTimeout(() => {
+                    status.classList.add('hidden');
+                }, 2500);
+            }
+
+            checkWinCondition() {
+                const isSolved = this.tubes.every(tube => {
+                    if (tube.length === 0) return true;
+                    if (tube.length !== this.maxBallsPerTube) return false;
+                    return tube.every(ball => ball === tube[0]);
+                });
+
+                if (isSolved) {
+                    this.levelComplete();
+                }
+            }
+
+            levelComplete() {
+                this.stopTimer();
+                const timeBonus = Math.max(0, 300 - this.timer);
+                const moveBonus = Math.max(0, (50 - this.moveCount) * 5);
+                const totalBonus = 100 * this.level + timeBonus + moveBonus;
+                this.score += totalBonus;
+                
+                document.getElementById('gameBoard').classList.add('level-complete');
+                document.getElementById('nextLevelBtn').classList.remove('hidden');
+                
+                this.showFeedback(`🎉 Level ${this.level} Complete! Bonus: +${totalBonus}`, 'success');
+                this.updateInstructionText(`🏆 Amazing! Level ${this.level} completed in ${this.moveCount} moves! Ready for the next challenge?`);
+                
+                // Create celebration particles
+                for (let i = 0; i < 20; i++) {
+                    setTimeout(() => {
+                        this.createSuccessParticles(
+                            Math.random() * window.innerWidth,
+                            Math.random() * window.innerHeight * 0.7
+                        );
+                    }, i * 100);
+                }
+                
+                this.triggerHapticFeedback('success');
+                
+                setTimeout(() => {
+                    document.getElementById('gameBoard').classList.remove('level-complete');
+                }, 1200);
+            }
+
+            nextLevel() {
+                this.level++;
+                document.getElementById('nextLevelBtn').classList.add('hidden');
+                this.clearSelection();
+                this.resetTimer();
+                this.generateLevel();
+                this.startTimer();
+                this.updateInstructionText(`🚀 Level ${this.level} - Let's sort some balls!`);
+            }
+
+            resetLevel() {
+                this.stopTimer();
+                this.clearSelection();
+                this.resetTimer();
+                this.generateLevel();
+                this.startTimer();
+                this.updateInstructionText("Fresh start! Tap a ball to select it, then tap a tube to move it there");
+                this.triggerHapticFeedback('medium');
+            }
+
+            showHint() {
+                const hint = this.findValidMove();
+                if (hint) {
+                    this.clearSelection();
+                    this.selectedTube = hint.from;
+                    this.updateVisualSelection();
+                    
+                    const toTube = document.querySelector(`[data-tube-index="${hint.to}"]`);
+                    if (toTube) {
+                        toTube.classList.add('hint-highlight');
+                        setTimeout(() => {
+                            toTube.classList.remove('hint-highlight');
+                        }, 3600);
+                    }
+                    
+                    this.showFeedback(`💡 Hint: Move the glowing ball to the golden tube!`, 'success');
+                    this.updateInstructionText(`💡 Great hint! The selected ball can move to the highlighted tube!`);
+                    this.triggerHapticFeedback('medium');
+                } else {
+                    this.showFeedback('🤔 No moves available - try resetting!', 'error');
+                    this.triggerHapticFeedback('error');
+                }
+            }
+
+            findValidMove() {
+                for (let from = 0; from < this.tubes.length; from++) {
+                    for (let to = 0; to < this.tubes.length; to++) {
+                        if (this.canMoveBall(from, to)) {
+                            return { from, to };
+                        }
+                    }
+                }
+                return null;
+            }
+
+            startTimer() {
+                this.timerInterval = setInterval(() => {
+                    this.timer++;
+                    this.updateTimer();
+                }, 1000);
+            }
+
+            stopTimer() {
+                if (this.timerInterval) {
+                    clearInterval(this.timerInterval);
+                    this.timerInterval = null;
+                }
+            }
+
+            resetTimer() {
+                this.timer = 0;
+                this.updateTimer();
+            }
+
+            updateTimer() {
+                const minutes = Math.floor(this.timer / 60);
+                const seconds = this.timer % 60;
+                document.getElementById('timer').textContent = 
+                    `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }
+
+            updateUI() {
+                document.getElementById('currentLevel').textContent = this.level;
+                document.getElementById('score').textContent = this.score.toLocaleString();
+            }
+        }
+
+        // Initialize the game when the page loads
+        window.addEventListener('load', () => {
+            new BallSortGame();
+        });
+
+        // Service worker for offline play
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('data:text/javascript,')
+                .catch(() => {
+                    // Fail silently
+                });
+            });
+        }
+    </script>
+</body>
+</html>
